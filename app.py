@@ -4,9 +4,23 @@ import redis
 import json
 from datetime import datetime
 from detect_anomalies import detect_brute_force, detect_cancel_abuse, detect_large_order, detect_sql_injection, detect_anomalous_order
+from kafka import KafkaConsumer
 
 app = Flask(__name__)
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+
+
+consumer = KafkaConsumer(
+    'Ecommerce-d',
+    bootstrap_servers='localhost:9092',
+    auto_offset_reset='earliest', 
+    enable_auto_commit=True,
+    group_id='my-group',
+    value_deserializer=lambda x: x.decode('utf-8')
+)
+
+for message in consumer:
+    print(f"Received message: {message.value}")
 
 def clear_redis_data():
     redis_client.flushdb()
