@@ -4,34 +4,6 @@ from datetime import datetime, timedelta
 # Kết nối tới Redis
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
-# Phát hiện các cuộc tấn công Brute-force
-def detect_brute_force(user_id, max_attempts=5):
-    key = f"user:{user_id}:logins"
-    failed_attempts = redis_client.lrange(key, 0, -1)
-    failed_attempts = [attempt.decode('utf-8') for attempt in failed_attempts if 'false' in attempt]
-
-    recent_failures = [attempt for attempt in failed_attempts if datetime.fromisoformat(attempt.split(':')[0]) > datetime.now() - timedelta(hours=1)]
-    
-    if len(recent_failures) > max_attempts:
-        return True
-    return False
-
-# Ngăn chặn hành vi hủy đơn hàng quá 3 lần
-def detect_cancel_abuse(user_id, product_id, max_cancellations=3):
-    key = f"user:{user_id}:actions"
-    actions = redis_client.lrange(key, 0, -1)
-    cancellations = [action.decode('utf-8') for action in actions if 'cancel' in action.decode('utf-8') and product_id in action.decode('utf-8')]
-    
-    if len(cancellations) > max_cancellations:
-        return True
-    return False
-
-# Ngăn chặn hành vi mua một đơn hàng với số lượng quá lớn
-def detect_large_order(user_id, quantity, max_quantity=50):
-    if quantity > max_quantity:
-        return True
-    return False
-
 # Ngăn chặn các request chứa các từ khóa SQL
 def detect_sql_injection(request):
     sql_keywords = ['SELECT', 'INSERT', 'DELETE', 'UPDATE', 'DROP']
@@ -40,21 +12,71 @@ def detect_sql_injection(request):
             return True
     return False
 
-# Ngăn chặn các hành vi đặt hàng không bình thường
-def detect_anomalous_order(user_id, product_id, quantity, factor=3, default_avg_quantity=5):
+# Thêm user_id vào blackList trong một khoảng thời gian nhất định
+def add_to_blacklist(user_id, duration_minutes=60):
+    redis_client.setex(f"blacklist:{user_id}", timedelta(minutes=duration_minutes), "blocked")
+
+# Kiểm tra xem user_id có nằm trong blackList hay không
+def is_in_blacklist(user_id):
+    return redis_client.exists(f"blacklist:{user_id}")
+
+# Ngăn chặn hành vi mua một mặt hàng quá nhiều trong một khoảng thời gian
+def detect_large_order(user_id, product_id, max_quantity, time_window_minutes=60):
+    if is_in_blacklist(user_id):
+        return True
+
     key = f"user:{user_id}:actions"
     actions = redis_client.lrange(key, 0, -1)
+    now = datetime.now()
+    time_window = now - timedelta(minutes=time_window_minutes)
+    
     purchases = [action.decode('utf-8') for action in actions if 'purchase' in action.decode('utf-8') and product_id in action.decode('utf-8')]
     
-    quantities = []
+    total_quantity = 0
     for action in purchases:
         try:
-            quantities.append(int(action.split(':')[3]))
+            timestamp_str, action_type, prod_id, quantity = action.split(':')
+            timestamp = datetime.fromisoformat(timestamp_str)
+            if timestamp >= time_window:
+                total_quantity += int(quantity)
         except (IndexError, ValueError) as e:
             print(f"Skipping invalid action data: {action} - Error: {e}")
-            
-    avg_quantity = sum(quantities) / len(quantities) if quantities else default_avg_quantity
     
-    if quantity > avg_quantity * factor:  # Giả sử nếu số lượng đặt hàng lớn hơn gấp {factor} lần số lượng trung bình
+    if total_quantity > max_quantity:
+        add_to_blacklist(user_id)
+        return True
+    return False
+
+# Cảnh báo đơn hàng có giá trị lớn bất thường
+def detect_large_value_order(user_id, price, threshold=1000):
+    if price > threshold:
+        add_to_blacklist(user_id)
+        return True
+    return False
+
+# Cảnh báo thời gian mua bất thường của người dùng
+def detect_unusual_purchase_time(user_id, timestamp, start_hour=0, end_hour=6):
+    purchase_time = datetime.fromisoformat(timestamp).time()
+    if purchase_time >= datetime.strptime(str(start_hour), "%H").time() and purchase_time <= datetime.strptime(str(end_hour), "%H").time():
+        add_to_blacklist(user_id)
+        return True
+    return False
+
+# Ngăn chặn các hành vi brute-force
+def detect_brute_force(user_id):
+    key = f"user:{user_id}:actions"
+    actions = redis_client.lrange(key, 0, -1)
+    if len(actions) > 100:
+        add_to_blacklist(user_id)
+        return True
+    return False
+
+# Ngăn chặn các hành vi lạm dụng hủy đơn hàng
+def detect_cancel_abuse(user_id, product_id):
+    key = f"user:{user_id}:actions"
+    actions = redis_client.lrange(key, 0, -1)
+    cancels = [action.decode('utf-8') for action in actions if 'cancel' in action.decode('utf-8') and product_id in action.decode('utf-8')]
+    if len(cancels) > 5:
+        add_to_blacklist(user_id)
         return True
     return False

@@ -4,25 +4,9 @@ import redis
 import json
 from datetime import datetime
 from detect_anomalies import detect_brute_force, detect_cancel_abuse, detect_large_order, detect_sql_injection, detect_large_value_order, detect_unusual_purchase_time, is_in_blacklist
-from kafka import KafkaConsumer
-from threading import Thread
 
 app = Flask(__name__)
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
-
-def consume_messages():
-    consumer = KafkaConsumer(
-        'Ecommerce-d',
-        bootstrap_servers='localhost:9092',
-        auto_offset_reset='earliest', 
-        enable_auto_commit=True,
-        group_id='my-group',
-        value_deserializer=lambda x: json.loads(x.decode('utf-8'))
-    )
-
-    for message in consumer:
-        data = message.value
-        process_message(data)
 
 def process_message(data):
     user_id = data.get('user_id')
@@ -87,6 +71,4 @@ def clear_redis_data():
 atexit.register(clear_redis_data)
 
 if __name__ == '__main__':
-    consumer_thread = Thread(target=consume_messages)
-    consumer_thread.start()
     app.run(debug=True)
