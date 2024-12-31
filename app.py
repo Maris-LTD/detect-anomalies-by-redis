@@ -21,8 +21,12 @@ def consume_messages():
     )
 
     for message in consumer:
-        data = message.value
-        process_message(data)
+        try:
+            data = message.value
+            process_message(data)
+        except json.JSONDecodeError as e:
+            print(f"JSONDecodeError: {e}")
+            print(f"Invalid JSON: {message.value}")
 
 def process_message(data):
     user_id = data.get('user_id')
@@ -31,6 +35,14 @@ def process_message(data):
     price = data.get('price', 0)
     timestamp = data.get('event_time')
 
+    # Chuyển đổi price từ chuỗi sang số thực
+    try:
+        price = float(price)
+    except ValueError as e:
+        print(f"ValueError: {e}")
+        print(f"Invalid price: {price}")
+        return
+
     # Kiểm tra xem user_id có nằm trong blackList hay không
     if is_in_blacklist(user_id):
         print(f"Blocked: User {user_id} is in blacklist")
@@ -38,17 +50,16 @@ def process_message(data):
 
     # Lưu trữ vào Redis
     redis_key = f"user:{user_id}:actions"
-    redis_client.lpush(redis_key, f"{timestamp}:{action}:{product_id}:{price}")
+    action_data = {
+        'timestamp': timestamp,
+        'action': action,
+        'product_id': product_id,
+        'quantity': 1,  # Assuming quantity is 1 for each purchase
+        'price': price
+    }
+    redis_client.lpush(redis_key, json.dumps(action_data))
 
     # Lưu trữ vào file text
-    action_data = {
-        'user_id': user_id,
-        'product_id': product_id,
-        'action': action,
-        'price': price,
-        'timestamp': timestamp
-    }
-    
     # with open('user_actions.txt', 'a') as file:
     #     file.write(json.dumps(action_data) + '\n')
 
@@ -87,6 +98,4 @@ def clear_redis_data():
 atexit.register(clear_redis_data)
 
 if __name__ == '__main__':
-    consumer_thread = Thread(target=consume_messages)
-    consumer_thread.start()
-    app.run(debug=True)
+    consume_messages();

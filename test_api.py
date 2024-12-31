@@ -17,6 +17,8 @@ def read_data_from_csv(filename):
             row['price'] = float(row['price'])
             row['event_time'] = row['event_time']
             data.append(row)
+
+    print(data)
     return data
 
 # Gửi yêu cầu POST đến API
@@ -38,7 +40,7 @@ def send_post_request(data):
 # Kiểm tra dữ liệu test
 def test_data():
     # Đọc dữ liệu hành động người dùng từ file CSV
-    user_actions = read_data_from_csv('user_actions.csv')
+    user_actions = read_data_from_csv('generated_data.csv')
 
     # Gửi từng hành động đến API và in phản hồi
     for action in user_actions:

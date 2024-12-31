@@ -1,5 +1,6 @@
 import redis
 from datetime import datetime, timedelta
+import json
 
 # Kết nối tới Redis
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
@@ -30,16 +31,19 @@ def detect_large_order(user_id, product_id, max_quantity, time_window_minutes=60
     now = datetime.now()
     time_window = now - timedelta(minutes=time_window_minutes)
     
-    purchases = [action.decode('utf-8') for action in actions if 'purchase' in action.decode('utf-8') and product_id in action.decode('utf-8')]
+    purchases = [json.loads(action.decode('utf-8')) for action in actions if 'purchase' in action.decode('utf-8') and product_id in action.decode('utf-8')]
     
     total_quantity = 0
     for action in purchases:
         try:
-            timestamp_str, action_type, prod_id, quantity = action.split(':')
+            timestamp_str = action['timestamp']
+            action_type = action['action']
+            prod_id = action['product_id']
+            quantity = action['quantity']
             timestamp = datetime.fromisoformat(timestamp_str)
             if timestamp >= time_window:
                 total_quantity += int(quantity)
-        except (IndexError, ValueError) as e:
+        except (KeyError, ValueError) as e:
             print(f"Skipping invalid action data: {action} - Error: {e}")
     
     if total_quantity > max_quantity:
@@ -75,7 +79,7 @@ def detect_brute_force(user_id):
 def detect_cancel_abuse(user_id, product_id):
     key = f"user:{user_id}:actions"
     actions = redis_client.lrange(key, 0, -1)
-    cancels = [action.decode('utf-8') for action in actions if 'cancel' in action.decode('utf-8') and product_id in action.decode('utf-8')]
+    cancels = [json.loads(action.decode('utf-8')) for action in actions if 'cancel' in action.decode('utf-8') and product_id in action.decode('utf-8')]
     if len(cancels) > 5:
         add_to_blacklist(user_id)
         return True
