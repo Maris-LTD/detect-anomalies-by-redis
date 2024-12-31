@@ -58,8 +58,14 @@ Hướng dẫn chạy chương trình này.
     - .\new_venv\Scripts\activate
 3. Cài đặt các thư viện cần thiết bên trong môi trường ảo
 
-4. chạy file app.py bằng lệnh python app.py
+4. chạy file app.py bằng lệnh python app.py (đã có kafka)
 
-5. chạy file test_api.py bằng lệnh python test_api.py
+Nếu cần test với http request flow thêm các bước sau:
 
-6. mở trình duyệt và truy cập địa chỉ http://localhost:8001 để kiểm tra dữ liệu được lưu vào redis.
+4. chạy file app_http.py thay vì app.py
+
+5. Tạo terminal mới và chạy lại môi trường ảo với lệnh .\new_venv\Scripts\activate
+
+6. chạy file test_api.py bằng lệnh python test_api.py
+
+5. mở trình duyệt và truy cập địa chỉ http://localhost:8001 để kiểm tra dữ liệu được lưu vào redis.
