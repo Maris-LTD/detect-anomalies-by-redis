@@ -51,7 +51,7 @@ def process_message(data):
         if detect_cancel_abuse(user_id, product_id):
             print(f"Blocked: Cancel abuse detected for user {user_id} and product {product_id}")
             return
-        if detect_large_order(user_id, product_id, max_quantity=10, time_window_minutes=60):
+        if detect_large_order(user_id, product_id, max_quantity=5, time_window_minutes=60):
             print(f"Blocked: Large order quantity detected for user {user_id} and product {product_id}")
             return
         if detect_sql_injection(json.dumps(data)):

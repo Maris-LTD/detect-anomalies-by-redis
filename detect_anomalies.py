@@ -28,7 +28,7 @@ def detect_large_order(user_id, product_id, max_quantity, time_window_minutes=60
 
     key = f"user:{user_id}:actions"
     actions = redis_client.lrange(key, 0, -1)
-    now = datetime.now()
+    now = datetime.utcnow()
     time_window = now - timedelta(minutes=time_window_minutes)
     
     purchases = [json.loads(action.decode('utf-8')) for action in actions if 'purchase' in action.decode('utf-8') and product_id in action.decode('utf-8')]
@@ -40,7 +40,7 @@ def detect_large_order(user_id, product_id, max_quantity, time_window_minutes=60
             action_type = action['action']
             prod_id = action['product_id']
             quantity = action['quantity']
-            timestamp = datetime.fromisoformat(timestamp_str)
+            timestamp = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S %Z")
             if timestamp >= time_window:
                 total_quantity += int(quantity)
         except (KeyError, ValueError) as e:
@@ -60,7 +60,7 @@ def detect_large_value_order(user_id, price, threshold=1000):
 
 # Cảnh báo thời gian mua bất thường của người dùng
 def detect_unusual_purchase_time(user_id, timestamp, start_hour=0, end_hour=6):
-    purchase_time = datetime.fromisoformat(timestamp).time()
+    purchase_time = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S %Z").time()
     if purchase_time >= datetime.strptime(str(start_hour), "%H").time() and purchase_time <= datetime.strptime(str(end_hour), "%H").time():
         add_to_blacklist(user_id)
         return True

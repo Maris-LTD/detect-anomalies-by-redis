@@ -1,0 +1,57 @@
+# Speed Layer Documentation
+
+## 1. Kiến trúc
+
+Speed Layer là một phần của kiến trúc Lambda, được thiết kế để xử lý dữ liệu trong thời gian thực. Kiến trúc của Speed Layer bao gồm các thành phần chính sau:
+
+- **Data Ingestion**: Thu thập dữ liệu từ các nguồn khác nhau như logs, events, hoặc streams.
+- **Stream Processing**: Xử lý dữ liệu ngay khi nó được thu thập, sử dụng các công cụ như Apache Kafka, Apache Flink, hoặc Apache Storm.
+- **Serving Layer**: Lưu trữ kết quả xử lý và cung cấp dữ liệu cho các ứng dụng hoặc người dùng cuối.
+
+## 2. Nghiệp vụ
+
+Speed Layer được sử dụng để giải quyết các bài toán nghiệp vụ yêu cầu xử lý dữ liệu nhanh chóng và cung cấp kết quả gần như ngay lập tức. Các nghiệp vụ điển hình bao gồm:
+
+- **Giám sát hệ thống**: Phát hiện và cảnh báo các sự cố hệ thống trong thời gian thực.
+- **Phân tích hành vi người dùng**: Theo dõi và phân tích hành vi người dùng trên các nền tảng trực tuyến.
+- **Gợi ý sản phẩm**: Cung cấp các gợi ý sản phẩm dựa trên hành vi mua sắm của người dùng.
+
+## 3. Logic
+
+Logic xử lý trong Speed Layer bao gồm các bước sau:
+
+1. **Thu thập dữ liệu**: Dữ liệu được thu thập từ các nguồn khác nhau và được đẩy vào hệ thống xử lý.
+2. **Xử lý dữ liệu**: Dữ liệu được xử lý ngay lập tức để tính toán các chỉ số, phát hiện sự kiện, hoặc thực hiện các phép biến đổi.
+3. **Lưu trữ kết quả**: Kết quả xử lý được lưu trữ trong cơ sở dữ liệu hoặc hệ thống lưu trữ để phục vụ cho các ứng dụng hoặc người dùng cuối.
+4. **Cung cấp dữ liệu**: Dữ liệu đã xử lý được cung cấp cho các ứng dụng hoặc người dùng cuối thông qua các API hoặc giao diện người dùng.
+
+Speed Layer giúp đảm bảo rằng dữ liệu được xử lý và cung cấp một cách nhanh chóng, đáp ứng các yêu cầu về thời gian thực của các ứng dụng hiện đại.
+## 4. Chi tiết triển khai
+
+### Kiến trúc
+
+Trong project này, kiến trúc của Speed Layer bao gồm các thành phần chính sau:
+
+- **Apache Kafka**: Được sử dụng để thu thập và truyền tải dữ liệu từ các nguồn khác nhau. Kafka hoạt động như một hệ thống message broker, nơi các producer gửi dữ liệu vào các topic và các consumer đọc dữ liệu từ các topic này.
+- **Redis**: Được sử dụng như một hệ thống lưu trữ tạm thời (in-memory data store) để lưu trữ kết quả xử lý dữ liệu từ Kafka. Redis cho phép truy xuất dữ liệu nhanh chóng và hiệu quả, phù hợp với các yêu cầu về thời gian thực.
+
+Dữ liệu từ các nguồn khác nhau được gửi vào Kafka, sau đó được xử lý bởi các ứng dụng stream processing và kết quả được lưu trữ trong Redis. Các ứng dụng hoặc người dùng cuối có thể truy xuất dữ liệu từ Redis thông qua các API hoặc giao diện người dùng.
+
+### Nghiệp vụ
+
+Project này giải quyết các vấn đề nghiệp vụ sau:
+
+- **Giám sát hệ thống**: Phát hiện và cảnh báo các sự cố hệ thống trong thời gian thực, giúp đảm bảo hệ thống hoạt động ổn định và liên tục.
+- **Phân tích hành vi người dùng**: Theo dõi và phân tích hành vi người dùng trên các nền tảng trực tuyến, giúp cải thiện trải nghiệm người dùng và tăng cường hiệu quả marketing.
+- **Gợi ý sản phẩm**: Cung cấp các gợi ý sản phẩm dựa trên hành vi mua sắm của người dùng, giúp tăng doanh số bán hàng và cải thiện sự hài lòng của khách hàng.
+
+### Logic
+
+Logic xử lý trong project này được thiết kế như sau:
+
+1. **Thu thập dữ liệu**: Dữ liệu từ các nguồn khác nhau được gửi vào các topic trong Kafka.
+2. **Xử lý dữ liệu**: Các ứng dụng stream processing đọc dữ liệu từ Kafka, thực hiện các phép biến đổi và tính toán cần thiết. Các công cụ như Apache Flink hoặc Apache Storm có thể được sử dụng để xử lý dữ liệu.
+3. **Lưu trữ kết quả**: Kết quả xử lý được lưu trữ trong Redis để truy xuất nhanh chóng và hiệu quả.
+4. **Cung cấp dữ liệu**: Dữ liệu đã xử lý được cung cấp cho các ứng dụng hoặc người dùng cuối thông qua các API hoặc giao diện người dùng.
+
+Kiến trúc này giúp đảm bảo rằng dữ liệu được xử lý và cung cấp một cách nhanh chóng, đáp ứng các yêu cầu về thời gian thực của các ứng dụng hiện đại.

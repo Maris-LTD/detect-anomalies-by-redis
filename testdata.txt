@@ -1,0 +1,1 @@
+{"event_time": "2025-01-02 15:26:44 UTC", "event_type": "view", "product_id": "1002544", "category_id": "2232732093077520756", "category_code": "construction.tools.light", "brand": "apple", "price": 410.42, "user_id": "739475972", "user_session": "36d45532-d7f0-4821-ae57-a828569731e7"}
